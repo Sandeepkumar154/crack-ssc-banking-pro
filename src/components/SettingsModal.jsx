@@ -1,17 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { Key, CheckCircle, AlertTriangle, ExternalLink, X, RefreshCw } from 'lucide-react';
-import { getStoredApiKey, setStoredApiKey, getStoredModel, setStoredModel, testApiKey } from '../services/geminiService';
+import { getStoredApiKey, setStoredApiKey, getStoredModel, setStoredModel, testApiKey, DEFAULT_MODEL } from '../services/geminiService';
 
 export default function SettingsModal({ isOpen, onClose, onApiKeySaved }) {
   const [apiKey, setApiKey] = useState('');
-  const [model, setModel] = useState('gemini-3.8-flash');
+  const [model, setModel] = useState(DEFAULT_MODEL);
   const [status, setStatus] = useState({ state: 'idle', message: '' });
 
   useEffect(() => {
     if (isOpen) {
       setApiKey(getStoredApiKey());
       const stored = getStoredModel();
-      setModel(stored === 'gemini-2.5-flash' ? 'gemini-3.8-flash' : stored);
+      if (!stored || stored === 'gemini-1.5-pro' || stored === 'gemini-3.8-flash' || stored === 'gemini-2.5-flash') {
+        setModel(DEFAULT_MODEL);
+        setStoredModel(DEFAULT_MODEL);
+      } else {
+        setModel(stored);
+      }
       setStatus({ state: 'idle', message: '' });
     }
   }, [isOpen]);
@@ -100,10 +105,10 @@ export default function SettingsModal({ isOpen, onClose, onApiKeySaved }) {
               onChange={(e) => setModel(e.target.value)}
               className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-sm text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
             >
-              <option value="gemini-2.0-flash">Gemini 2.0 Flash (Recommended - Highest Speed & No Congestion)</option>
+              <option value="gemini-2.0-flash">Gemini 2.0 Flash (Recommended - Highest Speed & Stability)</option>
               <option value="gemini-1.5-flash">Gemini 1.5 Flash (Ultra Stable)</option>
-              <option value="gemini-3.8-flash">Gemini 3.8 Flash</option>
-              <option value="gemini-1.5-pro">Gemini 1.5 Pro (Deep Reasoning)</option>
+              <option value="gemini-1.5-flash-8b">Gemini 1.5 Flash-8B (High Speed & Low Latency)</option>
+              <option value="gemini-1.5-pro-latest">Gemini 1.5 Pro (Deep Reasoning & Analysis)</option>
             </select>
           </div>
 
