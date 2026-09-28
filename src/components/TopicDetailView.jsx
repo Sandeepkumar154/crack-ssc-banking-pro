@@ -4,20 +4,23 @@ import {
   Eye, 
   AlertOctagon, 
   CheckCircle, 
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
   HelpCircle, 
   Sparkles, 
   Clock, 
   Target, 
   ChevronDown, 
   ChevronUp, 
-  RefreshCw,
-  BookOpen,
-  ArrowRight,
-  Bookmark,
-  Star,
-  Globe,
-  FileText,
-  Lightbulb
+  RefreshCw, 
+  BookOpen, 
+  ArrowRight, 
+  Bookmark, 
+  Star, 
+  Globe, 
+  FileText, 
+  Lightbulb 
 } from 'lucide-react';
 import { generateTypeQuestions } from '../services/geminiService';
 import { TOPIC_THEORY } from '../data/topicTheoryData';
@@ -72,7 +75,8 @@ export default function TopicDetailView({
   }
 
   const types = topic.types || [];
-  const activeType = types[selectedTypeIndex] || types[0];
+  const safeSelectedIdx = (selectedTypeIndex >= 0 && selectedTypeIndex < types.length) ? selectedTypeIndex : 0;
+  const activeType = types[safeSelectedIdx] || types[0] || null;
 
   const toggleBookmark = () => {
     try {
@@ -513,88 +517,35 @@ export default function TopicDetailView({
                       <span className="p-1 px-2 rounded-md bg-indigo-600/20 text-indigo-400 text-xs font-bold border border-indigo-500/30">
                         Exam Exemplar (New Vendor Pattern)
                       </span>
-                      <span className="text-xs text-slate-400 flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5 text-amber-400" />
-                        Target Time: <span className="text-amber-300 font-bold">{activeType.workedExample.targetTime}</span>
-                      </span>
+                      {typeof activeType.workedExample === 'object' && activeType.workedExample.targetTime && (
+                        <span className="text-xs text-slate-400 flex items-center gap-1">
+                          <Clock className="w-3.5 h-3.5 text-amber-400" />
+                          Target Time: <span className="text-amber-300 font-bold">{activeType.workedExample.targetTime}</span>
+                        </span>
+                      )}
                     </div>
 
-                    <button
-                      onClick={() => toggleSolution(`ex-${selectedTypeIndex}`)}
-                      className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1"
-                    >
-                      {revealedSolutions[`ex-${selectedTypeIndex}`] ? (
-                        <>Hide Solution <ChevronUp className="w-3.5 h-3.5" /></>
-                      ) : (
-                        <>Reveal Shortcut Steps <ChevronDown className="w-3.5 h-3.5" /></>
-                      )}
-                    </button>
+                    {typeof activeType.workedExample === 'object' && Array.isArray(activeType.workedExample.options) && (
+                      <button
+                        onClick={() => toggleSolution(`ex-${selectedTypeIndex}`)}
+                        className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1"
+                      >
+                        {revealedSolutions[`ex-${selectedTypeIndex}`] ? (
+                          <>Hide Solution <ChevronUp className="w-3.5 h-3.5" /></>
+                        ) : (
+                          <>Reveal Shortcut Steps <ChevronDown className="w-3.5 h-3.5" /></>
+                        )}
+                      </button>
+                    )}
                   </div>
 
-                  {/* Question Text */}
-                  <div className="text-sm font-medium text-slate-100 leading-relaxed bg-slate-950/50 p-3.5 rounded-xl border border-slate-800">
-                    {activeType.workedExample.question}
-                  </div>
-
-                  {/* Options */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    {activeType.workedExample.options.map((opt, oIdx) => {
-                      const qKey = `ex-${selectedTypeIndex}`;
-                      const userChoice = userSelectedOptions[qKey];
-                      const isSelected = userChoice === oIdx;
-                      const isCorrect = oIdx === activeType.workedExample.correctIndex;
-                      const isRevealed = revealedSolutions[qKey];
-
-                      let btnStyle = 'bg-slate-950/60 border-slate-800 hover:border-slate-700 text-slate-300';
-                      if (userChoice !== undefined) {
-                        if (isSelected && isCorrect) {
-                          btnStyle = 'bg-emerald-950/60 border-emerald-500 text-emerald-200 font-bold';
-                        } else if (isSelected && !isCorrect) {
-                          btnStyle = 'bg-rose-950/60 border-rose-500 text-rose-200';
-                        } else if (isCorrect) {
-                          btnStyle = 'bg-emerald-950/40 border-emerald-500/50 text-emerald-300';
-                        }
-                      } else if (isRevealed && isCorrect) {
-                        btnStyle = 'bg-emerald-950/40 border-emerald-500/50 text-emerald-300 font-bold';
-                      }
-
-                      return (
-                        <button
-                          key={oIdx}
-                          onClick={() => handleSelectOption(qKey, oIdx, activeType.workedExample.correctIndex)}
-                          className={`p-3 rounded-xl border text-left text-xs transition flex items-center justify-between ${btnStyle}`}
-                        >
-                          <div className="flex items-center gap-2">
-                            <span className="w-5 h-5 rounded-full bg-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-400">
-                              {String.fromCharCode(65 + oIdx)}
-                            </span>
-                            <span>{opt}</span>
-                          </div>
-                          {userChoice !== undefined && isCorrect && (
-                            <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  {/* Collapsible Solution & Trap Warning */}
-                  {(revealedSolutions[`ex-${selectedTypeIndex}`] || userSelectedOptions[`ex-${selectedTypeIndex}`] !== undefined) && (
-                    <div className="mt-4 pt-4 border-t border-slate-800/80 space-y-3 animate-in fade-in duration-150">
-                      
-                      {/* Step by step shortcut */}
-                      <div className="p-3.5 bg-slate-950 rounded-xl border border-indigo-900/30">
-                        <div className="text-xs font-bold text-indigo-400 mb-1.5 flex items-center gap-1.5">
-                          <Zap className="w-3.5 h-3.5" />
-                          <span>Speed Shortcut Breakdown:</span>
-                        </div>
-                        <div className="text-xs text-slate-200 font-mono whitespace-pre-line leading-relaxed">
-                          {activeType.workedExample.shortcutApplication}
-                        </div>
+                  {/* If workedExample is a simple string */}
+                  {typeof activeType.workedExample === 'string' ? (
+                    <div className="space-y-3">
+                      <div className="text-sm font-medium text-slate-100 leading-relaxed bg-slate-950/60 p-4 rounded-xl border border-indigo-900/30 font-sans">
+                        {activeType.workedExample}
                       </div>
-
-                      {/* Trap Warning Box */}
-                      {activeType.workedExample.examinerTrap && (
+                      {activeType.examinerTrap && (
                         <div className="p-3 bg-amber-950/30 border border-amber-800/40 rounded-xl flex items-start gap-2.5">
                           <AlertOctagon className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
                           <div>
@@ -602,13 +553,101 @@ export default function TopicDetailView({
                               Modern Examiner Trap Alert:
                             </span>
                             <p className="text-xs text-slate-300 leading-relaxed">
-                              {activeType.workedExample.examinerTrap}
+                              {activeType.examinerTrap}
                             </p>
                           </div>
                         </div>
                       )}
-
                     </div>
+                  ) : (
+                    /* If workedExample is an object */
+                    <>
+                      {/* Question Text */}
+                      {(activeType.workedExample.question || activeType.workedExample.q) && (
+                        <div className="text-sm font-medium text-slate-100 leading-relaxed bg-slate-950/50 p-3.5 rounded-xl border border-slate-800">
+                          {activeType.workedExample.question || activeType.workedExample.q}
+                        </div>
+                      )}
+
+                      {/* Options */}
+                      {Array.isArray(activeType.workedExample.options) && activeType.workedExample.options.length > 0 && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                          {activeType.workedExample.options.map((opt, oIdx) => {
+                            const qKey = `ex-${selectedTypeIndex}`;
+                            const userChoice = userSelectedOptions[qKey];
+                            const isSelected = userChoice === oIdx;
+                            const isCorrect = oIdx === activeType.workedExample.correctIndex;
+                            const isRevealed = revealedSolutions[qKey];
+
+                            let btnStyle = 'bg-slate-950/60 border-slate-800 hover:border-slate-700 text-slate-300';
+                            if (userChoice !== undefined) {
+                              if (isSelected && isCorrect) {
+                                btnStyle = 'bg-emerald-950/60 border-emerald-500 text-emerald-200 font-bold';
+                              } else if (isSelected && !isCorrect) {
+                                btnStyle = 'bg-rose-950/60 border-rose-500 text-rose-200';
+                              } else if (isCorrect) {
+                                btnStyle = 'bg-emerald-950/40 border-emerald-500/50 text-emerald-300';
+                              }
+                            } else if (isRevealed && isCorrect) {
+                              btnStyle = 'bg-emerald-950/40 border-emerald-500/50 text-emerald-300 font-bold';
+                            }
+
+                            return (
+                              <button
+                                key={oIdx}
+                                onClick={() => handleSelectOption(qKey, oIdx, activeType.workedExample.correctIndex)}
+                                className={`p-3 rounded-xl border text-left text-xs transition flex items-center justify-between ${btnStyle}`}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <span className="w-5 h-5 rounded-full bg-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-400">
+                                    {String.fromCharCode(65 + oIdx)}
+                                  </span>
+                                  <span>{opt}</span>
+                                </div>
+                                {userChoice !== undefined && isCorrect && (
+                                  <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {/* Collapsible Solution & Trap Warning */}
+                      {(revealedSolutions[`ex-${selectedTypeIndex}`] || userSelectedOptions[`ex-${selectedTypeIndex}`] !== undefined || !Array.isArray(activeType.workedExample.options)) && (
+                        <div className="mt-4 pt-4 border-t border-slate-800/80 space-y-3 animate-in fade-in duration-150">
+                          
+                          {/* Step by step shortcut */}
+                          {(activeType.workedExample.shortcutApplication || activeType.workedExample.solution || activeType.workedExample.hint) && (
+                            <div className="p-3.5 bg-slate-950 rounded-xl border border-indigo-900/30">
+                              <div className="text-xs font-bold text-indigo-400 mb-1.5 flex items-center gap-1.5">
+                                <Zap className="w-3.5 h-3.5" />
+                                <span>Speed Shortcut Breakdown:</span>
+                              </div>
+                              <div className="text-xs text-slate-200 font-mono whitespace-pre-line leading-relaxed">
+                                {activeType.workedExample.shortcutApplication || activeType.workedExample.solution || activeType.workedExample.hint}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Trap Warning Box */}
+                          {(activeType.workedExample.examinerTrap || activeType.examinerTrap) && (
+                            <div className="p-3 bg-amber-950/30 border border-amber-800/40 rounded-xl flex items-start gap-2.5">
+                              <AlertOctagon className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                              <div>
+                                <span className="text-xs font-bold text-amber-300 block mb-0.5">
+                                  Modern Examiner Trap Alert:
+                                </span>
+                                <p className="text-xs text-slate-300 leading-relaxed">
+                                  {activeType.workedExample.examinerTrap || activeType.examinerTrap}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+
+                        </div>
+                      )}
+                    </>
                   )}
 
                 </div>
@@ -713,7 +752,7 @@ export default function TopicDetailView({
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        {pq.options.map((opt, oIdx) => {
+                        {(pq.options || []).map((opt, oIdx) => {
                           const isSelected = userChoice === oIdx;
                           const isCorrect = oIdx === pq.correctIndex;
                           let btnStyle = 'bg-slate-900 border-slate-800 hover:border-slate-700 text-slate-300';

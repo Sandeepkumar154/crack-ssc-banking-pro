@@ -43,22 +43,24 @@ function Sidebar({
 
   // Extract all subjects present in current syllabusData
   const subjectList = useMemo(() => {
-    return Object.keys(syllabusData).map((subKey) => {
+    return Object.keys(syllabusData || {}).map((subKey) => {
+      const subData = syllabusData[subKey] || {};
       const meta = SUBJECT_METADATA[subKey] || {
         id: subKey,
-        name: syllabusData[subKey].subjectName,
+        name: subData.subjectName || subKey,
         icon: 'BookOpen',
         weightage: 'High'
       };
       return {
         ...meta,
-        data: syllabusData[subKey]
+        name: meta.name || subData.subjectName || subKey,
+        data: subData
       };
     });
   }, [syllabusData]);
 
   // Active subject data
-  const activeSubject = syllabusData[selectedSubjectId] || subjectList[0]?.data;
+  const activeSubject = syllabusData?.[selectedSubjectId] || subjectList[0]?.data;
 
   // Filtered topics based on search
   const filteredTopics = useMemo(() => {
@@ -66,12 +68,12 @@ function Sidebar({
     if (!searchQuery.trim()) return activeSubject.topics;
 
     const q = searchQuery.toLowerCase();
-    return activeSubject.topics.filter(t => 
-      t.name.toLowerCase().includes(q) ||
+    return (activeSubject.topics || []).filter(t => 
+      (t.name || '').toLowerCase().includes(q) ||
       t.types?.some(type => 
-        type.title.toLowerCase().includes(q) || 
-        type.identificationBlueprint.toLowerCase().includes(q) ||
-        type.proShortcut.toLowerCase().includes(q)
+        (type?.title || '').toLowerCase().includes(q) || 
+        (type?.identificationBlueprint || '').toLowerCase().includes(q) ||
+        (type?.proShortcut || '').toLowerCase().includes(q)
       )
     );
   }, [activeSubject, searchQuery]);
@@ -111,7 +113,7 @@ function Sidebar({
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="text-xs font-semibold truncate leading-tight">
-                    {sub.name.split('(')[0]}
+                    {(sub.name || sub.id || 'Subject').split('(')[0]}
                   </div>
                   <div className="text-[10px] text-slate-400">
                     {topicCount} Topics
@@ -140,7 +142,7 @@ function Sidebar({
       {/* Topics List with Completion Checkbox & Type Count */}
       <div className="flex-1 overflow-y-auto p-3 space-y-1.5">
         <div className="flex items-center justify-between text-[11px] font-bold text-slate-400 px-1 pb-1">
-          <span>Topics in {activeSubject?.subjectName?.split('(')[0]}</span>
+          <span>Topics in {(activeSubject?.subjectName || 'Subject').split('(')[0]}</span>
           <span>{filteredTopics.length} available</span>
         </div>
 

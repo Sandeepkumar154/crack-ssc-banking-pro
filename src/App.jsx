@@ -12,6 +12,7 @@ import ExamHub from './components/ExamHub';
 import ShortcutsDeck from './components/ShortcutsDeck';
 import ProgressDashboard from './components/ProgressDashboard';
 import StudyPlan from './components/StudyPlan';
+import ErrorBoundary from './components/ErrorBoundary';
 
 import { EXAMS_CATALOG } from './data/examsData';
 import { SSC_CGL_SYLLABUS } from './data/sscCglSyllabus';
@@ -274,18 +275,26 @@ export default function App() {
               completedTopics={completedTopics}
               onToggleCompleteTopic={toggleCompleteTopic}
             />
-            <TopicDetailView
-              topic={activeTopic}
-              subjectName={activeSubject?.subjectName || 'Subject'}
-              examName={currentExam.shortName}
-              onAskAiAboutTopic={handleAskAiAboutTopic}
-              onNextTopic={currentTopicIndex < (activeSubject?.topics?.length || 0) - 1 ? handleNextTopic : null}
-              onPrevTopic={currentTopicIndex > 0 ? handlePrevTopic : null}
-              hasNextTopic={currentTopicIndex < (activeSubject?.topics?.length || 0) - 1}
-              hasPrevTopic={currentTopicIndex > 0}
-              isCompleted={Boolean(completedTopics[activeTopic?.id])}
-              onToggleComplete={() => activeTopic && toggleCompleteTopic(activeTopic.id)}
-            />
+            <ErrorBoundary onReset={() => {
+              const firstSubKey = availableSubjectKeys[0] || 'quant';
+              setSelectedSubjectId(firstSubKey);
+              if (currentSyllabus[firstSubKey]?.topics?.[0]) {
+                setSelectedTopicId(currentSyllabus[firstSubKey].topics[0].id);
+              }
+            }}>
+              <TopicDetailView
+                topic={activeTopic}
+                subjectName={activeSubject?.subjectName || 'Subject'}
+                examName={currentExam.shortName}
+                onAskAiAboutTopic={handleAskAiAboutTopic}
+                onNextTopic={currentTopicIndex < (activeSubject?.topics?.length || 0) - 1 ? handleNextTopic : null}
+                onPrevTopic={currentTopicIndex > 0 ? handlePrevTopic : null}
+                hasNextTopic={currentTopicIndex < (activeSubject?.topics?.length || 0) - 1}
+                hasPrevTopic={currentTopicIndex > 0}
+                isCompleted={Boolean(completedTopics[activeTopic?.id])}
+                onToggleComplete={() => activeTopic && toggleCompleteTopic(activeTopic.id)}
+              />
+            </ErrorBoundary>
           </div>
         )}
 
